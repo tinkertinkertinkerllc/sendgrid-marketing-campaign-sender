@@ -35,5 +35,16 @@ class SendGridSingleSendDispatcherEditor {
 			echo "<p>You haven't configured an API key!</p>";
 			return;
 		}
+		?>
+		<button id="sgssd_reload">Reload Options</button>
+		<div id="sgssd_loading" style="display: none">Loading...</div>
+		<br><span>Lists:</span><br>
+		<div id="sgssd_lists"></div>
+		<span>Segments:</span><br>
+		<div id="sgssd_segments"></div>
+		<span>Unsubscribe Groups:</span><br>
+		<div id="sgssd_groups"></div><br>
+		<span>Sender:</span><select id="sgssd_sender"></select>
+		<?php
 	}
 }
