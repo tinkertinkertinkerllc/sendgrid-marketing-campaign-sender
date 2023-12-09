@@ -45,6 +45,8 @@ class SendGridSingleSendDispatcherEditor {
 		<span>Unsubscribe Groups:</span><br>
 		<div id="sgssd_groups"></div><br>
 		<span>Sender:</span><select id="sgssd_sender"></select>
+		<div><button id="sgssd_create">Create Without Sending</button></div>
+		<div><button id="sgssd_send">Send</button></div>
 		<?php
 	}
 }
