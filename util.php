@@ -2,8 +2,8 @@
 
 class SendGridSingleSendDispatcherUtil {
 	function enqueue() {
-		if(!wp_script_is('sgssd_forms', 'enqueued')) {
-			wp_enqueue_script(
+		if(!wp_script_is('sgssd_forms', 'registered')) {
+			wp_register_script(
 				'sgssd_forms',
 				plugins_url('js/forms.js', __FILE__),
 				['jquery'],

@@ -15,17 +15,17 @@ class SendGridSingleSendDispatcherEditor {
 		add_action('admin_enqueue_scripts', function() {
 			$util = $GLOBALS['sendgrid_single_send_dispatcher_util'];
 
-			// TODO: I don't think this properly filters out things that aren't
-			// the post editor.
 			$screen = get_current_screen();
-			if(!is_object($screen) or !in_array($screen->post_type, ['post'])) {
+			if(!is_object($screen) or $screen->base != 'post'
+					or $screen->post_type != 'post') {
 				return;
 			}
+
 			$util->enqueue();
 			wp_enqueue_script(
 				'sgssd_editor',
 				plugins_url('js/editor.js', __FILE__),
-				["jquery"],
+				["jquery", "sgssd_forms"],
 				bin2hex(random_bytes(10))); # TODO: Don't randomize the version
 			wp_localize_script(
 				'sgssd_editor',

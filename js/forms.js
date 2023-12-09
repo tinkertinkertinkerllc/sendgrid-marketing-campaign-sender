@@ -24,19 +24,24 @@ const sgssd_forms = (function(){
 	do_update();
 
 	return {
-		attach: function($, state, loading, not_loading, lists, segments,
-				all_contacts, suppression_group, sender) {
+		attach: function($, initial_state, loading, not_loading, lists,
+				segments, all_contacts, suppression_group, sender,
+				checkbox_template) {
+			let state = initial_state;
+			state.lists = [...(initial_state.lists || [])]
+			state.segments = [...(initial_state.segments || [])]
+			state.all_contacts = initial_state.all_contacts || false;
+
 			let containers = lists.add(segments.add(suppression_group.add(sender)));
 
-			state.lists ||= [];
-			state.suppressions ||= [];
-			state.all_conotacts ||= false;
+			let list_nodes = $();
+			let segment_nodes = $();
 
 			let compile = function() {
 				return {
-					lists: lists.children("input:checked")
+					lists: lists.find("input:checked")
 						.get().map((a) => a.value),
-					segments: segments.children("input:checked")
+					segments: segments.find("input:checked")
 						.get().map((a) => a.value),
 					suppression_group: int_option(suppression_group),
 					sender: int_option(sender),
@@ -48,22 +53,23 @@ const sgssd_forms = (function(){
 				state = compile();
 				loading.show();
 				not_loading.hide();
-				containers.children().remove();
 			}
 
 			let after_loading = function() {
 				for(a of qualifiers_state.lists) {
-					let checked = (state.lists.includes(a.id))?("checked"):("");
-					lists.append(
-						`<input type="checkbox" value="${a.id}" ${checked}>
-						<span>${a.name}</span><br>`);
+					let checked = (state.lists.includes(a.id));
+					let node = checkbox_template.clone();
+					node.find(".sgssd_checkbox").attr("value", a.id).prop("checked", checked);
+					node.find(".sgssd_checkbox_name").text(a.name);
+					lists.append(node);
 				}
 
 				for(a of qualifiers_state.segments) {
-					let checked = (state.segments.includes(a.id))?("checked"):("");
-					segments.append(
-						`<input type="checkbox" value="${a.id}" ${checked}>
-						<span>${a.name}</span><br>`);
+					let checked = (state.segments.includes(a.id));
+					let node = checkbox_template.clone();
+					node.find(".sgssd_checkbox").attr("value", a.id).prop("checked", checked);
+					node.find(".sgssd_checkbox_name").text(a.name);
+					segments.append(node);
 				}
 
 				for(i in qualifiers_state.suppressions) {
@@ -86,19 +92,26 @@ const sgssd_forms = (function(){
 					}
 				}
 
+				all_contacts.prop("checked", state.all_contacts);
+
 				loading.hide();
 				not_loading.show();
 			}
 
-			on_update = function() {
+			if(qualifiers_state == undefined) {
+				loading.show();
+				not_loading.hide();
+			}  else {
+				after_loading();
+			}
+
+			jQuery(document).on("sgssd-forms-update", function() {
 				if(qualifiers_state == undefined) {
 					when_loading();
 				} else {
 					after_loading();
 				}
-			};
-			on_update();
-			jQuery(document).on("sgssd-forms-update", on_update);
+			});
 
 			return {
 				compile: compile,
