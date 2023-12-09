@@ -13,7 +13,7 @@ class SendGridSingleSendDispatcherUtil {
 				'sgssd_forms_ajax',
 				array(
 					'ajax_url' => admin_url('admin-ajax.php'),
-					'nonce' => wp_create_nonce('sgssd_get_qualifiers'),
+					'get_qualifiers_nonce' => wp_create_nonce('sgssd_get_qualifiers'),
 				));
 		}
 	}

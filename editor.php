@@ -15,6 +15,8 @@ class SendGridSingleSendDispatcherEditor {
 		add_action('admin_enqueue_scripts', function() {
 			$util = $GLOBALS['sendgrid_single_send_dispatcher_util'];
 
+			// TODO: I don't think this properly filters out things that aren't
+			// the post editor.
 			$screen = get_current_screen();
 			if(!is_object($screen) or !in_array($screen->post_type, ['post'])) {
 				return;
@@ -24,7 +26,14 @@ class SendGridSingleSendDispatcherEditor {
 				'sgssd_editor',
 				plugins_url('js/editor.js', __FILE__),
 				[],
-				'1');
+				bin2hex(random_bytes(10))); # TODO: Don't randomize the version
+			wp_localize_script(
+				'sgssd_editor',
+				'sgssd_editor_ajax',
+				array(
+					'ajax_url' => admin_url('admin-ajax.php'),
+					'create_nonce' => wp_create_nonce('sgssd_create'),
+				));
 		});
 	}
 
@@ -35,15 +44,16 @@ class SendGridSingleSendDispatcherEditor {
 			echo "<p>You haven't configured an API key!</p>";
 			return;
 		}
+		// TODO: Make the html nicer.
 		?>
-		<button id="sgssd_reload">Reload Options</button>
+		<button id="sgssd_reload">Reload Options</button><br>
 		<div id="sgssd_loading" style="display: none">Loading...</div>
+		<input id="sgssd_all_contacts" type="checkbox"><span>Send to all contacts</span><br>
 		<br><span>Lists:</span><br>
 		<div id="sgssd_lists"></div>
 		<span>Segments:</span><br>
 		<div id="sgssd_segments"></div>
-		<span>Unsubscribe Groups:</span><br>
-		<div id="sgssd_groups"></div><br>
+		<span>Unsubscribe Group:</span><select id="sgssd_group"></select>
 		<span>Sender:</span><select id="sgssd_sender"></select>
 		<div><button id="sgssd_create">Create Without Sending</button></div>
 		<div><button id="sgssd_send">Send</button></div>

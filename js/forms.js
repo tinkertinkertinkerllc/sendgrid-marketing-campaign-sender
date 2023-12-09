@@ -1,6 +1,6 @@
-function sgssd_forms_attach($, lists, segments, suppression_groups, sender,
-		reload, loading) {
-	containers = lists.add(segments.add(suppression_groups.add(sender)));
+function sgssd_forms_attach($, lists, segments, all_contacts,
+		suppression_group, sender, reload, loading) {
+	containers = lists.add(segments.add(suppression_group.add(sender)));
 	updating = false
 	update = function() {
 		containers.children().remove();
@@ -9,12 +9,10 @@ function sgssd_forms_attach($, lists, segments, suppression_groups, sender,
 
 		if(updating) return;
 		updating = true;
-		$.post(sgssd_forms_ajax.ajax_url, {
-			_ajax_nonce: sgssd_forms_ajax.nonce,
-			action: "get_qualifiers",
+		$.get(sgssd_forms_ajax.ajax_url, {
+			_ajax_nonce: sgssd_forms_ajax.get_qualifiers_nonce,
+			action: "sgssd_get_qualifiers",
 		}, function(data) {
-			console.log(data);
-
 			for(a of data.lists) {
 				lists.append(
 					`<input type="checkbox" value="${a.id}">
@@ -26,9 +24,8 @@ function sgssd_forms_attach($, lists, segments, suppression_groups, sender,
 						<span>${a.name}</span><br>`);
 			}
 			for(a of data.suppressions) {
-				suppression_groups.append(
-					`<input type="checkbox" value="${a.id}">
-						<span>${a.name}</span><br>`);
+				suppression_group.append(
+					`<option value="${a.id}">${a.name}</option>`);
 			}
 			for(a of data.senders) {
 				sender.append(
@@ -48,7 +45,10 @@ function sgssd_forms_attach($, lists, segments, suppression_groups, sender,
 		update();
 	});
 
-	sender_node = sender.get(0);
+	int_option = function(q) {
+		node = q.get(0);
+		return Number(node.options[node.selectedIndex].value);
+	};
 
 	return {
 		result: function() {
@@ -57,9 +57,9 @@ function sgssd_forms_attach($, lists, segments, suppression_groups, sender,
 					.get().map((a) => a.value),
 				segments: segments.children("input:checked")
 					.get().map((a) => a.value),
-				suppressions: suppression_groups.children("input:checked")
-					.get().map((a) => a.value),
-				sender: sender_node.options[sender_node.selectedIndex].value,
+				suppression_group: int_option(suppression_group),
+				sender: int_option(sender),
+				all_contacts: all_contacts.get(0).checked,
 			};
 		},
 	};
