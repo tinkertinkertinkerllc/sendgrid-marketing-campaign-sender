@@ -136,15 +136,19 @@ class SendGridSingleSendDispatcherAjax {
 		$profiles = $util->get_profiles();
 		if(!isset($profiles[$profile_id])) wp_die(-1, 400);
 		$profile = $profiles[$profile_id];
+		if(!empty($profile->errors)) wp_die(-1, 400);
 
-		// TODO: More validation.
+		$qualifiers = $profile->qualifiers;
+		$all_contacts = $qualifiers->all_contacts;
+		$lists = $qualifiers->lists;
+		$segments = $qualifiers->segments;
+		$suppression_group = $qualifiers->suppression_group;
+		$sender = $qualifiers->sender;
 
-		$qualifiers = $profile["qualifiers"];
-		$all_contacts = $qualifiers["all_contacts"];
-		$lists = $qualifiers["lists"];
-		$segments = $qualifiers["segments"];
-		$suppression_group = $qualifiers["suppression_group"];
-		$sender = $qualifiers["sender"];
+		if($all_contacts) {
+			$lists = [];
+			$segments = [];
+		}
 
 		if(metadata_exists('post', $post_id, '_sgssd_single_send_id')) {
 			// Don't make a duplicate single send when one already existed.

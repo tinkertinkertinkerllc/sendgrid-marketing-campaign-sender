@@ -67,18 +67,81 @@ class SendGridSingleSendDispatcherOptions {
 		});
 	}
 
+	function sanitize_object($parent, $name) {
+		if(!isset($parent->{$name})) $parent->{$name} = new stdClass;
+		$obj = &$parent->{$name};
+		if(is_array($obj)) $obj = (object)$obj;
+		if(!is_object($obj)) $obj = new stdClass;
+	}
+
+	function sanitize_str_idlist($parent, $name) {
+		if(!isset($parent->{$name})) $parent->{$name} = array();
+		$obj = &$parent->{$name};
+		if(!is_array($obj)) $obj = array();
+		foreach($obj as $key => $value) {
+			if(!is_string($value)) {
+				unset($obj[$key]);
+			}
+		}
+	}
+
+	function sanitize_profiles(&$profiles) {
+		if(is_string($profiles)) $profiles = json_decode($profiles, true);
+		if(!is_array($profiles)) $profiles = array();
+		foreach(array_keys($profiles) as $key) {
+			if(!is_string($key) or !preg_match('/^[a-zA-Z0-9-]*$/', $key)) {
+				unset($profiles[$key]);
+			}
+		}
+
+		foreach($profiles as &$profile) {
+			if(is_array($profile)) $profile = (object)$profile;
+			if(!is_object($profile)) $profile = new stdClass();
+
+			if(!isset($profile->name)) $profile->name = "";
+			if(!is_string($profile->name)) $profile->name = "";
+
+			$this->sanitize_object($profile, "qualifiers");
+			$qualifiers = &$profile->qualifiers;
+			{
+				$all_contacts = &$qualifiers->all_contacts;
+				if(!isset($all_contacts)) $all_contacts = false;
+				if(!is_bool($all_contacts)) $all_contacts = false;
+
+				$this->sanitize_str_idlist($qualifiers, "lists");
+				$this->sanitize_str_idlist($qualifiers, "segments");
+
+				$suppression_group = &$qualifiers->suppression_group;
+				if(!isset($suppression_group)) $suppression_group = null;
+				if(!is_int($suppression_group)) $suppression_group = null;
+
+				$sender = &$qualifiers->sender;
+				if(!isset($sender)) $sender = null;
+				if(!is_int($sender)) $sender = null;
+			}
+
+			$profile->errors = array();
+			$errors = &$profile->errors;
+			if(empty($profile->name)) {
+				array_push($errors, "The profile needsa a name.");
+			}
+			if($qualifiers->suppression_group == null) {
+				array_push($errors, "A suppression group must be specified.");
+			}
+			if($qualifiers->sender == null) {
+				array_push($errors, "A sender must be specified.");
+			}
+			if(!$qualifiers->all_contacts and empty($qualifiers->lists)
+					and empty($quaifiers->segments)) {
+					array_push($errors, "If all contacts are not selected, "
+						."at least one list or segment must be provided.");
+			}
+		}
+	}
+
 	function sanitize($opts) {
 		if(isset($opts["sgssd_field_profiles"])) {
-			$profiles = $opts["sgssd_field_profiles"];
-			if(is_string($profiles)) {
-				$profiles = json_decode($profiles, true);
-				if($profiles === null) {
-					$profiles = array();
-				}
-			} else {
-				$profiles = array();
-			}
-			$opts["sgssd_field_profiles"] = $profiles;
+			$this->sanitize_profiles($opts["sgssd_field_profiles"]);
 		}
 		return $opts;
 	}

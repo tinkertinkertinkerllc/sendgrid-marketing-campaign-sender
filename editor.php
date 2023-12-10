@@ -49,10 +49,9 @@ class SendGridSingleSendDispatcherEditor {
 		<?php
 
 		foreach($util->get_profiles() as $id => $profile) {
-			if(!isset($profile["name"])) continue;
-			$name = $profile["name"];
+			if(!empty($profile->errors)) continue;
 			echo "<option value='" . esc_attr($id) . "'>";
-			echo esc_html($name);
+			echo esc_html($profile->name);
 			echo "</option>";
 		}
 
