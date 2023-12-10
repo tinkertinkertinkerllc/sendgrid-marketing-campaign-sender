@@ -130,29 +130,21 @@ class SendGridSingleSendDispatcherAjax {
 			wp_die(-1, 403);
 		}
 
-		if(!isset($_POST["qualifiers"])) wp_die(-1, 400);
-		$qualifiers = json_decode(stripslashes($_POST["qualifiers"]));
-		if($qualifiers === null) wp_die(-1, 400);
+		if(!isset($_POST["profile_ID"])) wp_die(-1, 400);
+		$profile_id = $_POST["profile_ID"];
+		if(!is_string($profile_id)) wp_die(-1, 400);
+		$profiles = $util->get_profiles();
+		if(!isset($profiles[$profile_id])) wp_die(-1, 400);
+		$profile = $profiles[$profile_id];
 
-		if(!isset($qualifiers->{"all_contacts"})) wp_die(-1, 400);
-		$all_contacts = $qualifiers->{"all_contacts"};
-		if(!is_bool($all_contacts)) wp_die(-1, 400);
+		// TODO: More validation.
 
-		if(!isset($qualifiers->{"lists"})) wp_die(-1, 400);
-		$lists = $this->str_idlist($qualifiers->{"lists"});
-		if($lists === null) wp_die(-1, 400);
-
-		if(!isset($qualifiers->{"segments"})) wp_die(-1, 400);
-		$segments = $this->str_idlist($qualifiers->{"segments"});
-		if($segments === null) wp_die(-1, 400);
-
-		if(!isset($qualifiers->{"suppression_group"})) wp_die(-1, 400);
-		$suppression_group = $this->int_id($qualifiers->{"suppression_group"});
-		if($suppression_group === null) wp_die(-1, 400);
-
-		if(!isset($qualifiers->{"sender"})) wp_die(-1, 400);
-		$sender = $this->int_id($qualifiers->{"sender"});
-		if($sender === null) wp_die(-1, 400);
+		$qualifiers = $profile["qualifiers"];
+		$all_contacts = $qualifiers["all_contacts"];
+		$lists = $qualifiers["lists"];
+		$segments = $qualifiers["segments"];
+		$suppression_group = $qualifiers["suppression_group"];
+		$sender = $qualifiers["sender"];
 
 		if(metadata_exists('post', $post_id, '_sgssd_single_send_id')) {
 			// Don't make a duplicate single send when one already existed.

@@ -55,4 +55,15 @@ class SendGridSingleSendDispatcherUtil {
 
 		return true;
 	}
+
+	function get_profiles() {
+		$options = get_option('sgssd_options');
+		if($options === false) return array();
+		if(isset($options["sgssd_field_profiles"])) {
+			$profiles = $options["sgssd_field_profiles"];
+			if(is_array($profiles)) return $profiles;
+			return array();
+		}
+		return array();
+	}
 }

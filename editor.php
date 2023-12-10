@@ -25,7 +25,7 @@ class SendGridSingleSendDispatcherEditor {
 			wp_enqueue_script(
 				'sgssd_editor',
 				plugins_url('js/editor.js', __FILE__),
-				["jquery", "sgssd_forms"],
+				["jquery"],
 				bin2hex(random_bytes(10))); # TODO: Don't randomize the version
 			wp_localize_script(
 				'sgssd_editor',
@@ -44,17 +44,20 @@ class SendGridSingleSendDispatcherEditor {
 			echo "<p>You haven't configured an API key!</p>";
 			return;
 		}
-		// TODO: Make the html nicer.
 		?>
-		<button id="sgssd_reload">Reload Options</button><br>
-		<div id="sgssd_loading" style="display: none">Loading...</div>
-		<input id="sgssd_all_contacts" type="checkbox"><span>Send to all contacts</span><br>
-		<br><span>Lists:</span><br>
-		<div id="sgssd_lists"></div>
-		<span>Segments:</span><br>
-		<div id="sgssd_segments"></div>
-		<span>Unsubscribe Group:</span><select id="sgssd_group"></select>
-		<span>Sender:</span><select id="sgssd_sender"></select>
+		<span>Profile:</span><select id="sgssd_profile">
+		<?php
+
+		foreach($util->get_profiles() as $id => $profile) {
+			if(!isset($profile["name"])) continue;
+			$name = $profile["name"];
+			echo "<option value='" . esc_attr($id) . "'>";
+			echo esc_html($name);
+			echo "</option>";
+		}
+
+		?>
+		</select>
 		<div><button id="sgssd_create">Create Without Sending</button></div>
 		<div><button id="sgssd_send">Send</button></div>
 		<?php

@@ -71,7 +71,7 @@ class SendGridSingleSendDispatcherOptions {
 		if(isset($opts["sgssd_field_profiles"])) {
 			$profiles = $opts["sgssd_field_profiles"];
 			if(is_string($profiles)) {
-				$profiles = json_decode($profiles);
+				$profiles = json_decode($profiles, true);
 				if($profiles === null) {
 					$profiles = array();
 				}
