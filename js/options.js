@@ -5,9 +5,9 @@ jQuery(document).ready(function($) {
 	let checkbox_template = $(".sgssd_profile_checkbox_template");
 	let profiles = [];
 
-	make_profile = function(name, data) {
+	make_profile = function(id, data) {
 		let clone = template.clone();
-		let form = sgssd_forms.attach($, data, $(), $(),
+		let form = sgssd_forms.attach($, data.qualifiers || {}, $(), $(),
 			clone.find(".sgssd_lists"), clone.find(".sgssd_segments"),
 			clone.find(".sgssd_all_contacts"), clone.find(".sgssd_group"),
 			clone.find(".sgssd_sender"), checkbox_template);
@@ -17,29 +17,26 @@ jQuery(document).ready(function($) {
 			clone.remove();
 		});
 
-		clone.find(".sgssd_name").prop("value", name);
-		profiles.push([clone.get(0), form]);
+		clone.find(".sgssd_name").prop("value", data.name || "");
+		profiles.push({id: id, node: clone.get(0), form: form});
 		clone.insertBefore(add);
 	}
 
-	for(k in sgssd_options_profiles) {
-		make_profile(k, sgssd_options_profiles[k]);
+	for(id in sgssd_options_profiles) {
+		make_profile(id, sgssd_options_profiles[id]);
 	}
 
 	add.on("click", function(){
-		let new_input = {};
-		for(a of profiles) {
-			new_input[$(a[0]).find(".sgssd_name").prop("value")] = a[1].compile();
-		}
-		console.log(new_input);
-
-		make_profile("", {});
+		make_profile(window.crypto.randomUUID(), {});
 	});
 
 	$("#sgssd_form").on("submit", function(){
 		let new_input = {};
 		for(a of profiles) {
-			new_input[$(a[0]).find(".sgssd_name").prop("value")] = a[1].compile();
+			new_input[a.id] = {
+				name: $(a.node).find(".sgssd_name").prop("value"),
+				qualifiers: a.form.compile(),
+			};
 		}
 		input.value = JSON.stringify(new_input);
 	});

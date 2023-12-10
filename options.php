@@ -21,7 +21,7 @@ class SendGridSingleSendDispatcherOptions {
 
 			$options = get_option('sgssd_options');
 			if(isset($options['sgssd_field_profiles'])) {
-				$profiles = json_decode($options['sgssd_field_profiles']);
+				$profiles = $options['sgssd_field_profiles'];
 			} else {
 				$profiles = [];
 			}
@@ -43,7 +43,8 @@ class SendGridSingleSendDispatcherOptions {
 
 		});
 		add_action('admin_init', function() {
-			register_setting('sgssd', 'sgssd_options');
+			register_setting('sgssd', 'sgssd_options',
+				array('sanitize_callback' => array($this, 'sanitize')));
 			add_settings_section(
 				'sgssd_section_general',
 				'',
@@ -64,6 +65,22 @@ class SendGridSingleSendDispatcherOptions {
 				'sgssd_section_general',
 				array('label_for' => 'sgssd_field_profiles'));
 		});
+	}
+
+	function sanitize($opts) {
+		if(isset($opts["sgssd_field_profiles"])) {
+			$profiles = $opts["sgssd_field_profiles"];
+			if(is_string($profiles)) {
+				$profiles = json_decode($profiles);
+				if($profiles === null) {
+					$profiles = array();
+				}
+			} else {
+				$profiles = array();
+			}
+			$opts["sgssd_field_profiles"] = $profiles;
+		}
+		return $opts;
 	}
 
 	function profile_options($args) {
