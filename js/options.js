@@ -13,7 +13,7 @@ jQuery(document).ready(function($) {
 			clone.find(".sgssd_sender"), checkbox_template);
 
 		clone.find(".sgssd_delete").on("click", function() {
-			profiles = profiles.filter((a) => a[0] != clone.get(0));
+			profiles = profiles.filter((a) => a.node != clone.get(0));
 			clone.remove();
 		});
 
