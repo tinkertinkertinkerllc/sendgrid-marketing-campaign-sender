@@ -20,7 +20,13 @@ const sgssd_forms = (function(){
 			qualifiers_state = data;
 			document.dispatchEvent(update_event);
 		}, function(error) {
-			console.log(error);
+			$ = jQuery;
+			let p = $(document.createElement("p"))
+				.text("Faield to get SendGrid information: " + error);
+			let div = $(document.createElement("div"))
+				.addClass("notice notice-error is-dismissible").append(p);
+			$("#sgssd_errors_head").after(div);
+			$(document).trigger('wp-updates-notice-added');
 		});
 	};
 	do_update();

@@ -11,7 +11,11 @@ function sgssd_request(type, url, data, success, error) {
 			success(response);
 		}
 	}).fail(function(xhr) {
-		error("Error sending request: " + xhr.status);
+		try {
+			error(JSON.parse(xhr.responseText).error);
+		} catch(e) {
+			error("Error sending request: " + xhr.status);
+		}
 	});
 }
 

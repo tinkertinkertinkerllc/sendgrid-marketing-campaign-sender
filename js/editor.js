@@ -20,6 +20,15 @@ jQuery(document).ready(function($) {
 		return false;
 	}
 
+	function on_error(action, goback) {
+		return function(error) {
+			wp.data.dispatch( 'core/notices' ).createErrorNotice(
+				action + ": " + error, { isDismissible: true }
+			);
+			menu(goback, true);
+		};
+	}
+
 	$("#sgssd_create").on("click", function() {
 		menu(none_menu, false);
 		sgssd_post(sgssd_editor_ajax.ajax_url, {
@@ -30,10 +39,7 @@ jQuery(document).ready(function($) {
 			should_schedule: "false",
 		}, function(data) {
 			menu(created_menu, true);
-		}, function(error) {
-			console.log(error);
-			menu(none_menu, true);
-		});
+		}, on_error("Faield to create single send", none_menu));
 	});
 
 	$("#sgssd_create_and_schedule").on("click", function() {
@@ -46,10 +52,7 @@ jQuery(document).ready(function($) {
 			should_schedule: "true",
 		}, function(data) {
 			menu(scheduled_menu, true);
-		}, function(error) {
-			console.log(error);
-			menu(none_menu, true);
-		});
+		}, on_error("Failed to schedule single send", none_menu));
 	});
 
 	$("#sgssd_schedule").on("click", function() {
@@ -60,10 +63,7 @@ jQuery(document).ready(function($) {
 			post_ID: $('#post_ID').val(),
 		}, function(data) {
 			menu(scheduled_menu, true);
-		}, function(error) {
-			console.log(error);
-			menu(created_menu, true);
-		});
+		}, on_error("Failed to schedule single send", created_menu));
 	});
 
 	$("#sgssd_forget").on("click", function() {
@@ -75,10 +75,7 @@ jQuery(document).ready(function($) {
 			post_ID: $('#post_ID').val(),
 		}, function(data) {
 			menu(none_menu, true);
-		}, function(error) {
-			console.log(error);
-			menu(created_menu, true);
-		});
+		}, on_error("Faield to forget single send", created_menu));
 	});
 
 	$("#sgssd_forget_scheduled").on("click", function() {
@@ -90,9 +87,6 @@ jQuery(document).ready(function($) {
 			post_ID: $('#post_ID').val(),
 		}, function(data) {
 			menu(none_menu, true);
-		}, function(error) {
-			console.log(error);
-			menu(scheduled_menu, true);
-		});
+		}, on_error("Failed to forget single send", scheduled_menu));
 	});
 });
