@@ -26,9 +26,17 @@ class SendGridSingleSendDispatcherAjax {
 		$res = json_decode($data);
 		if($res === null)
 			$this->send_error("Invalid server response", 500);
-		// TODO: Generate a more human-readable error.
-		if(isset($res->errors))
-			$this->send_error(json_encode($res->errors), 500);
+		if(isset($res->errors)) {
+			$errors = array();
+			foreach($res->errors as $err) {
+				if($err->field) {
+					array_push($errors, $err->field . ": " . $err->message);
+				} else {
+					array_push($errors, $err->message);
+				}
+			}
+			$this->send_error(join("; ", $errors), 500);
+		}
 		return $res;
 	}
 
