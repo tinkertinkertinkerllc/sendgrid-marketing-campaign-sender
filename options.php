@@ -19,27 +19,29 @@ class SendGridSingleSendDispatcherOptions {
 			$util = $GLOBALS['sendgrid_single_send_dispatcher_util'];
 			$util->enqueue();
 
-			$options = get_option('sgssd_options');
-			if(isset($options['sgssd_field_profiles'])) {
-				$profiles = $options['sgssd_field_profiles'];
-			} else {
-				$profiles = array();
+			if($util->api_key_exists()) {
+				wp_enqueue_script(
+					'sgssd_options',
+					plugins_url('js/options.js', __FILE__),
+					array("jquery", "sgssd_requests"),
+					bin2hex(random_bytes(10))); # TODO: Don't randomize the version
+				wp_localize_script(
+					'sgssd_options',
+					'sgssd_options_ajax',
+					array(
+						'ajax_url' => admin_url('admin-ajax.php'),
+						'get_qualifiers_nonce' => wp_create_nonce('sgssd_get_qualifiers'),
+					));
+				wp_localize_script(
+					'sgssd_options',
+					'sgssd_options_profiles',
+					$util->get_profiles());
+				wp_enqueue_style(
+					'sgssd_options_style',
+					plugins_url('css/options.css', __FILE__),
+					array(),
+					bin2hex(random_bytes(10))); # TODO: Don't randomize the version
 			}
-
-			wp_enqueue_script(
-				'sgssd_options',
-				plugins_url('js/options.js', __FILE__),
-				array("jquery", "sgssd_forms"),
-				bin2hex(random_bytes(10))); # TODO: Don't randomize the version
-			wp_localize_script(
-				'sgssd_options',
-				'sgssd_options_profiles',
-				$profiles);
-			wp_enqueue_style(
-				'sgssd_options_style',
-				plugins_url('css/options.css', __FILE__),
-				array(),
-				bin2hex(random_bytes(10))); # TODO: Don't randomize the version
 		});
 		add_action('admin_init', function() {
 			register_setting('sgssd', 'sgssd_options',
@@ -146,6 +148,8 @@ class SendGridSingleSendDispatcherOptions {
 	}
 
 	function profile_options($args) {
+		$util = $GLOBALS['sendgrid_single_send_dispatcher_util'];
+
 		$label_for = $args['label_for'];
 		?>
 		<div style="display: none">
@@ -158,28 +162,32 @@ class SendGridSingleSendDispatcherOptions {
 			</fieldset>
 		</div>
 		<div style="display: none"><div id="sgssd_profile_template" class="sgssd_profile">
+			<div class="sgssd_profile_errors"></div>
 			<table class="form-table"><tbody>
 				<tr>
 					<th scope="row"><span>Name</span></th>
 					<td><input type="text" class="sgssd_name"></td>
 				</tr>
-				<tr>
+				<tr class="sgssd_loading">
+					<th scope="row"><span>Loading...</span></th>
+				</tr>
+				<tr class="sgssd_loadable">
 					<th scope="row"><span>Select All Contacts</span></th>
 					<td><input type="checkbox" class="sgssd_all_contacts"></td>
 				</tr>
-				<tr>
+				<tr class="sgssd_loadable">
 					<th scope="row"><span>Lists</span></th>
 					<td><fieldset class="sgssd_lists"></fieldset></td>
 				</tr>
-				<tr>
+				<tr class="sgssd_loadable">
 					<th scope="row"><span>Segments</span></th>
 					<td><fieldset class="sgssd_segments"></fieldset></td>
 				</tr>
-				<tr>
+				<tr class="sgssd_loadable">
 					<th scope="row"><span>Unsubscribe Group</span></th>
 					<td><select class="sgssd_group"></select></td>
 				</tr>
-				<tr>
+				<tr class="sgssd_loadable">
 					<th scope="row"><span>Sender</span></th>
 					<td><select class="sgssd_sender"></select></td>
 				</tr>
@@ -192,9 +200,17 @@ class SendGridSingleSendDispatcherOptions {
 			id='<?php echo esc_attr($label_for) ?>'
 			name='sgssd_options[<?php echo esc_attr($label_for) ?>]'
 			type='hidden'
-			value=''>
-		<button type="button" class="button" id="sgssd_profile_add">+</button>
+			value='<?php echo json_encode($util->get_profiles()) ?>'>
 		<?php
+		if($util->api_key_exists()) {
+			?>
+			<button type="button" class="button" id="sgssd_profile_add">New</button>
+			<?php
+		} else {
+			?>
+			<p>An API key must be added before this section can be configured.</p>
+			<?php
+		}
 	}
 
 	function general_options_api_key($args) {

@@ -10,22 +10,6 @@ class SendGridSingleSendDispatcherUtil {
 				array('jquery'),
 				bin2hex(random_bytes(10))); # TODO: Don't randomize the version
 		}
-
-		if(!wp_script_is('sgssd_forms', 'registered')
-				and !wp_script_is('sgssd_forms', 'enqueued')) {
-			wp_register_script(
-				'sgssd_forms',
-				plugins_url('js/forms.js', __FILE__),
-				array('jquery', 'sgssd_requests'),
-				bin2hex(random_bytes(10))); # TODO: Don't randomize the version
-			wp_localize_script(
-				'sgssd_forms',
-				'sgssd_forms_ajax',
-				array(
-					'ajax_url' => admin_url('admin-ajax.php'),
-					'get_qualifiers_nonce' => wp_create_nonce('sgssd_get_qualifiers'),
-				));
-		}
 	}
 
 	function api_key() {

@@ -4,3 +4,11 @@
 	margin-bottom: 2em;
 	padding-left: 1em;
 }
+
+.sgssd_profile_error {
+	color: red;
+}
+
+.sgssd_loadable {
+	display: none;
+}

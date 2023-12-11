@@ -73,6 +73,18 @@ class SendGridSingleSendDispatcherEditor {
 			return;
 		}
 
+		$valid_profile = false;
+		foreach($util->get_profiles() as $id => $profile) {
+			if(!empty($profile->errors)) continue;
+			$valid_profile = true;
+		}
+
+
+		if(!$valid_profile) {
+			echo "<p>You haven't configured any profiles!</p>";
+			return;
+		}
+
 		if(get_post_meta($post->ID, '_sgssd_single_send_id')) {
 			if(get_post_meta($post->ID, '_sgssd_single_send_scheduled')) {
 				$state = $this::SendScheduled;
