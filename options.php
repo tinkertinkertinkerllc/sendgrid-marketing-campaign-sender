@@ -40,7 +40,6 @@ class SendGridSingleSendDispatcherOptions {
 				plugins_url('css/options.css', __FILE__),
 				array(),
 				bin2hex(random_bytes(10))); # TODO: Don't randomize the version
-
 		});
 		add_action('admin_init', function() {
 			register_setting('sgssd', 'sgssd_options',

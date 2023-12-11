@@ -5,7 +5,9 @@ require_once plugin_dir_path(__FILE__).'/vendor/sendgrid-php/sendgrid-php.php';
 class SendGridSingleSendDispatcherAjax {
 	function __construct() {
 		add_action('wp_ajax_sgssd_get_qualifiers', array($this, 'get_qualifiers'));
-		add_action('wp_ajax_sgssd_create', array($this, 'create'));
+		add_action('wp_ajax_sgssd_create', array($this, 'create_single_send'));
+		add_action('wp_ajax_sgssd_schedule', array($this, 'schedule_single_send'));
+		add_action('wp_ajax_sgssd_forget', array($this, 'forget_single_send'));
 	}
 
 	function send_error($text, $status) {
@@ -105,7 +107,7 @@ class SendGridSingleSendDispatcherAjax {
 		$sg = $this->sendgrid();
 
 		$lists = array();
-		$pos = $this->get($sg->client->marketing()->listsfake());
+		$pos = $this->get($sg->client->marketing()->lists());
 		do {
 			foreach ($pos->result as $item) {
 				array_push($lists, array(
@@ -151,7 +153,20 @@ class SendGridSingleSendDispatcherAjax {
 		);
 	}
 
-	function create() {
+	function schedule_with($sg, $ss_id, $post_id) {
+		if(get_post_meta($post_id, '_sgssd_single_send_scheduled')) {
+			$this->send_bad_request();
+		}
+
+		$this->put($sg->client->marketing()->singlesends()->_($ss_id)->schedule(),
+			array("send_at" => "now"));
+
+		update_post_meta($post_id, '_sgssd_single_send_scheduled', true);
+
+		wp_send_json(array());
+	}
+
+	function create_single_send() {
 		$util = $GLOBALS['sendgrid_single_send_dispatcher_util'];
 
 		check_ajax_referer('sgssd_create');
@@ -223,13 +238,53 @@ class SendGridSingleSendDispatcherAjax {
 		$ss_id = (string)$data->id;
 		update_post_meta($post_id, '_sgssd_single_send_id', $ss_id);
 
-		if($should_schedule) {
-			$this->put($sg->client->marketing()->singlesends()->_($ss_id)->schedule(),
-				array("send_at" => "now"));
+		if($should_schedule) $this->schedule_with($sg, $ss_id, $post_id);
 
-			update_post_meta($post_id, '_sgssd_single_send_scheduled', true);
+		wp_send_json(array());
+	}
+
+	function schedule_single_send() {
+		check_ajax_referer('sgssd_schedule');
+		if(!current_user_can('publish_posts')) {
+			$this->send_forbidden();
 		}
 
-		wp_die();
+		if(!isset($_POST["post_ID"])) $this->send_bad_request();
+		$post_id = $this->int_id($_POST["post_ID"]);
+		if($post_id == false) $this->send_bad_request();
+
+		if(!current_user_can('edit_post', $post_id)) {
+			$this->send_forbidden();
+		}
+
+		$ss_id = get_post_meta($post_id, '_sgssd_single_send_id', true);
+		if(!$ss_id) $this->send_bad_request();
+
+		$sg = $this->sendgrid();
+
+		$this->schedule_with($sg, $ss_id, $post_id);
+	}
+
+	function forget_single_send() {
+		check_ajax_referer('sgssd_forget');
+		if(!current_user_can('publish_posts')) {
+			$this->send_forbidden();
+		}
+
+		if(!isset($_POST["post_ID"])) $this->send_bad_request();
+		$post_id = $this->int_id($_POST["post_ID"]);
+		if($post_id == false) $this->send_bad_request();
+
+		if(!current_user_can('edit_post', $post_id)) {
+			$this->send_forbidden();
+		}
+
+		if(!get_post_meta($post_id, '_sgssd_single_send_id'))
+			$this->send_bad_request();
+
+		delete_post_meta($post_id, '_sgssd_single_send_scheduled');
+		delete_post_meta($post_id, '_sgssd_single_send_id');
+
+		wp_send_json(array());
 	}
 }

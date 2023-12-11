@@ -2,7 +2,8 @@
 
 class SendGridSingleSendDispatcherUtil {
 	function enqueue() {
-		if(!wp_script_is('sgssd_requests', 'registered')) {
+		if(!wp_script_is('sgssd_requests', 'registered')
+				and !wp_script_is('sgssd_requests', 'enqueued')) {
 			wp_register_script(
 				'sgssd_requests',
 				plugins_url('js/requests.js', __FILE__),
@@ -10,7 +11,8 @@ class SendGridSingleSendDispatcherUtil {
 				bin2hex(random_bytes(10))); # TODO: Don't randomize the version
 		}
 
-		if(!wp_script_is('sgssd_forms', 'registered')) {
+		if(!wp_script_is('sgssd_forms', 'registered')
+				and !wp_script_is('sgssd_forms', 'enqueued')) {
 			wp_register_script(
 				'sgssd_forms',
 				plugins_url('js/forms.js', __FILE__),

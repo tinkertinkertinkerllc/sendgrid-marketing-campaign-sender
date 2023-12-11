@@ -5,6 +5,9 @@ require_once plugin_dir_path(__FILE__).'/util.php';
 class SendGridSingleSendDispatcherEditor {
 	function __construct() {
 		add_action('add_meta_boxes', function() {
+			// TODO: Handle $post_type here the same way we do when enqueueing
+			// scripts.
+
 			add_meta_box(
 				'sgssd_meta_box',
 				'Single Send',
@@ -33,32 +36,102 @@ class SendGridSingleSendDispatcherEditor {
 				array(
 					'ajax_url' => admin_url('admin-ajax.php'),
 					'create_nonce' => wp_create_nonce('sgssd_create'),
+					'schedule_nonce' => wp_create_nonce('sgssd_schedule'),
+					'forget_nonce' => wp_create_nonce('sgssd_forget'),
 				));
+			wp_enqueue_style(
+				'sgssd_editor_style',
+				plugins_url('css/editor.css', __FILE__),
+				array(),
+				bin2hex(random_bytes(10))); # TODO: Don't randomize the version
 		});
 	}
 
-	function meta_box() {
+	function forget_warning() {
+		?>
+		<p class="sgssd_forget_warning">
+		Note: This button will not delete the single send. It will only forget about
+		the one associated with this post. Use it if you need to re-create
+		the singlesend.
+		</p>
+		<?php
+	}
+
+	const SendNone = 0;
+	const SendCreated = 1;
+	const SendScheduled = 2;
+
+	function maybe_hidden($visible) {
+		if(!$visible) echo 'style="display: none"';
+	}
+
+	function meta_box($post) {
 		$util = $GLOBALS['sendgrid_single_send_dispatcher_util'];
 
 		if(!$util->api_key_exists()) {
 			echo "<p>You haven't configured an API key!</p>";
 			return;
 		}
-		?>
-		<span>Profile:</span><select id="sgssd_profile">
-		<?php
 
-		foreach($util->get_profiles() as $id => $profile) {
-			if(!empty($profile->errors)) continue;
-			echo "<option value='" . esc_attr($id) . "'>";
-			echo esc_html($profile->name);
-			echo "</option>";
+		if(get_post_meta($post->ID, '_sgssd_single_send_id')) {
+			if(get_post_meta($post->ID, '_sgssd_single_send_scheduled')) {
+				$state = $this::SendScheduled;
+			} else {
+				$state = $this::SendCreated;
+			}
+		} else {
+			$state = $this::SendNone;
 		}
 
 		?>
-		</select>
-		<div><button id="sgssd_create">Create Without Sending</button></div>
-		<div><button id="sgssd_send">Send</button></div>
+		<div id="sgssd_send_none"
+				<?php $this->maybe_hidden($state == $this::SendNone) ?>>
+			<span>Profile:</span><select id="sgssd_profile">
+			<?php
+
+			foreach($util->get_profiles() as $id => $profile) {
+				if(!empty($profile->errors)) continue;
+				echo "<option value='" . esc_attr($id) . "'>";
+				echo esc_html($profile->name);
+				echo "</option>";
+			}
+
+			?>
+			</select>
+			<p><button
+				type="button"
+				class="button sgssd_button"
+				id="sgssd_create">Create Without Scheduling</button></p>
+			<p><button
+				type="button"
+				class="button sgssd_button"
+				id="sgssd_create_and_schedule">Schedule</button></p>
+		</div>
+
+		<div id="sgssd_send_created"
+				<?php $this->maybe_hidden($state == $this::SendCreated) ?>>
+			<p>Single Send Created.</p>
+			<p><button
+				type="button"
+				class="button sgssd_button"
+				id="sgssd_schedule">Schedule</button></p>
+			<?php $this->forget_warning() ?>
+			<p><button
+				type="button"
+				class="button sgssd_button"
+				id="sgssd_forget">Forget</button></p>
+		</div>
+
+		<div id="sgssd_send_scheduled"
+				<?php $this->maybe_hidden($state == $this::SendScheduled) ?>>
+			<p>Single Send Created.</p>
+			<p>Single Send Scheduled.</p>
+			<?php $this->forget_warning() ?>
+			<p><button
+				type="button"
+				class="button sgssd_button"
+				id="sgssd_forget_scheduled">Forget</button></p>
+		</div>
 		<?php
 	}
 }

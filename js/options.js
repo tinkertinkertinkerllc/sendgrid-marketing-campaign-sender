@@ -5,7 +5,7 @@ jQuery(document).ready(function($) {
 	let checkbox_template = $(".sgssd_profile_checkbox_template");
 	let profiles = [];
 
-	make_profile = function(id, data) {
+	function make_profile(id, data) {
 		let clone = template.clone();
 		let form = sgssd_forms.attach($, data.qualifiers || {}, $(), $(),
 			clone.find(".sgssd_lists"), clone.find(".sgssd_segments"),

@@ -2,14 +2,14 @@ const sgssd_forms = (function(){
 	let qualifiers_state = null;
 	const update_event = new Event("sgssd-forms-update");
 
-	let int_option = function(q) {
+	function int_option(q) {
 		let node = q.get(0);
 		let i = node.selectedIndex;
 		if(i < 0) return null;
 		return Number(node.options[i].value);
 	};
 
-	let do_update = function() {
+	function do_update() {
 		qualifiers_state = null;
 		document.dispatchEvent(update_event);
 
@@ -34,12 +34,12 @@ const sgssd_forms = (function(){
 			state.segments = [...(initial_state.segments || [])]
 			state.all_contacts = initial_state.all_contacts || false;
 
-			let containers = lists.add(segments.add(suppression_group.add(sender)));
+			let containers = lists.add(segments).add(suppression_group).add(sender);
 
 			let list_nodes = $();
 			let segment_nodes = $();
 
-			let compile = function() {
+			function compile() {
 				return {
 					lists: lists.find("input:checked")
 						.get().map((a) => a.value),
@@ -51,13 +51,13 @@ const sgssd_forms = (function(){
 				}
 			}
 
-			let when_loading = function() {
+			function when_loading() {
 				state = compile();
 				loading.show();
 				not_loading.hide();
 			}
 
-			let after_loading = function() {
+			function after_loading() {
 				for(a of qualifiers_state.lists) {
 					let checked = (state.lists.includes(a.id));
 					let node = checkbox_template.clone();
