@@ -1,70 +1,70 @@
 <?php
 
-class SendGridSingleSendDispatcherOptions {
+class SendGridMarketingCampaignSenderOptions {
 	function __construct() {
 		add_action('admin_menu', function() {
 			add_options_page(
-				'Single Send Settings',
-				'Single Send',
+				'SendGrid Marketing Campaign Settings',
+				'SendGrid Marketing Campaign',
 				'manage_options',
-				'sgssd',
+				'sgmcs',
 				array($this, 'options'));
 		});
 		add_action('admin_enqueue_scripts', function() {
 			$screen = get_current_screen();
-			if(!is_object($screen) or $screen->id != 'settings_page_sgssd') {
+			if(!is_object($screen) or $screen->id != 'settings_page_sgmcs') {
 				return;
 			}
 
-			$util = $GLOBALS['sendgrid_single_send_dispatcher_util'];
+			$util = $GLOBALS['sendgrid_marketing_campaign_sender_util'];
 			$util->enqueue();
 
 			if($util->api_key_exists()) {
 				wp_enqueue_script(
-					'sgssd_options',
+					'sgmcs_options',
 					$util->script_url('options'),
-					array("jquery", "sgssd_requests"),
+					array("jquery", "sgmcs_requests"),
 					"1");
 				wp_localize_script(
-					'sgssd_options',
-					'sgssd_options_ajax',
+					'sgmcs_options',
+					'sgmcs_options_ajax',
 					array(
 						'ajax_url' => admin_url('admin-ajax.php'),
-						'get_qualifiers_nonce' => wp_create_nonce('sgssd_get_qualifiers'),
+						'get_qualifiers_nonce' => wp_create_nonce('sgmcs_get_qualifiers'),
 					));
 				wp_localize_script(
-					'sgssd_options',
-					'sgssd_options_profiles',
+					'sgmcs_options',
+					'sgmcs_options_profiles',
 					$util->get_profiles());
 				wp_enqueue_style(
-					'sgssd_options_style',
+					'sgmcs_options_style',
 					plugins_url('css/options.css', __FILE__),
 					array(),
 					"1");
 			}
 		});
 		add_action('admin_init', function() {
-			register_setting('sgssd', 'sgssd_options',
+			register_setting('sgmcs', 'sgmcs_options',
 				array('sanitize_callback' => array($this, 'sanitize')));
 			add_settings_section(
-				'sgssd_section_general',
+				'sgmcs_section_general',
 				'',
 				'',
-				'sgssd');
+				'sgmcs');
 			add_settings_field(
-				'sgssd_field_api_key',
-				__('API Key', 'sgssd'),
+				'sgmcs_field_api_key',
+				__('API Key', 'sgmcs'),
 				array($this, 'general_options_api_key'),
-				'sgssd',
-				'sgssd_section_general',
-				array('label_for' => 'sgssd_field_api_key'));
+				'sgmcs',
+				'sgmcs_section_general',
+				array('label_for' => 'sgmcs_field_api_key'));
 			add_settings_field(
-				'sgssd_field_profiles',
-				__('Profiles', 'sgssd'),
+				'sgmcs_field_profiles',
+				__('Profiles', 'sgmcs'),
 				array($this, 'profile_options'),
-				'sgssd',
-				'sgssd_section_general',
-				array('label_for' => 'sgssd_field_profiles'));
+				'sgmcs',
+				'sgmcs_section_general',
+				array('label_for' => 'sgmcs_field_profiles'));
 		});
 	}
 
@@ -141,70 +141,70 @@ class SendGridSingleSendDispatcherOptions {
 	}
 
 	function sanitize($opts) {
-		if(isset($opts["sgssd_field_profiles"])) {
-			$this->sanitize_profiles($opts["sgssd_field_profiles"]);
+		if(isset($opts["sgmcs_field_profiles"])) {
+			$this->sanitize_profiles($opts["sgmcs_field_profiles"]);
 		}
 		return $opts;
 	}
 
 	function profile_options($args) {
-		$util = $GLOBALS['sendgrid_single_send_dispatcher_util'];
+		$util = $GLOBALS['sendgrid_marketing_campaign_sender_util'];
 
 		$label_for = $args['label_for'];
 		?>
 		<div style="display: none">
 			<fieldset>
-				<div class="sgssd_profile_checkbox_template">
-					<input type="checkbox" class="sgssd_checkbox">
-					<span class="sgssd_checkbox_name">item</span>
+				<div class="sgmcs_profile_checkbox_template">
+					<input type="checkbox" class="sgmcs_checkbox">
+					<span class="sgmcs_checkbox_name">item</span>
 					<br>
 				</div>
 			</fieldset>
 		</div>
-		<div style="display: none"><div id="sgssd_profile_template" class="sgssd_profile">
-			<div class="sgssd_profile_errors"></div>
+		<div style="display: none"><div id="sgmcs_profile_template" class="sgmcs_profile">
+			<div class="sgmcs_profile_errors"></div>
 			<table class="form-table"><tbody>
 				<tr>
 					<th scope="row"><span>Name</span></th>
-					<td><input type="text" class="sgssd_name"></td>
+					<td><input type="text" class="sgmcs_name"></td>
 				</tr>
-				<tr class="sgssd_loading">
+				<tr class="sgmcs_loading">
 					<th scope="row"><span>Loading...</span></th>
 				</tr>
-				<tr class="sgssd_loadable">
+				<tr class="sgmcs_loadable">
 					<th scope="row"><span>Select All Contacts</span></th>
-					<td><input type="checkbox" class="sgssd_all_contacts"></td>
+					<td><input type="checkbox" class="sgmcs_all_contacts"></td>
 				</tr>
-				<tr class="sgssd_loadable">
+				<tr class="sgmcs_loadable">
 					<th scope="row"><span>Lists</span></th>
-					<td><fieldset class="sgssd_lists"></fieldset></td>
+					<td><fieldset class="sgmcs_lists"></fieldset></td>
 				</tr>
-				<tr class="sgssd_loadable">
+				<tr class="sgmcs_loadable">
 					<th scope="row"><span>Segments</span></th>
-					<td><fieldset class="sgssd_segments"></fieldset></td>
+					<td><fieldset class="sgmcs_segments"></fieldset></td>
 				</tr>
-				<tr class="sgssd_loadable">
+				<tr class="sgmcs_loadable">
 					<th scope="row"><span>Unsubscribe Group</span></th>
-					<td><select class="sgssd_group"></select></td>
+					<td><select class="sgmcs_group"></select></td>
 				</tr>
-				<tr class="sgssd_loadable">
+				<tr class="sgmcs_loadable">
 					<th scope="row"><span>Sender</span></th>
-					<td><select class="sgssd_sender"></select></td>
+					<td><select class="sgmcs_sender"></select></td>
 				</tr>
 				<tr>
-					<td><button type="button" class="button sgssd_delete">Delete</button></th>
+					<td><button type="button" class="button sgmcs_delete">Delete</button></th>
 				</tr>
 			</tbody></table>
 		</div></div>
 		<input
 			id='<?php echo esc_attr($label_for) ?>'
-			name='sgssd_options[<?php echo esc_attr($label_for) ?>]'
+			name='sgmcs_options[<?php echo esc_attr($label_for) ?>]'
 			type='hidden'
 			value='<?php echo json_encode($util->get_profiles()) ?>'>
 		<?php
 		if($util->api_key_exists()) {
 			?>
-			<button type="button" class="button" id="sgssd_profile_add">New</button>
+			<button type="button" class="button" id="sgmcs_profile_add">New</button>
 			<?php
 		} else {
 			?>
@@ -214,12 +214,12 @@ class SendGridSingleSendDispatcherOptions {
 	}
 
 	function general_options_api_key($args) {
-		$options = get_option('sgssd_options');
+		$options = get_option('sgmcs_options');
 		$label_for = $args['label_for'];
 		?>
 		<input
 			id='<?php echo esc_attr($label_for) ?>'
-			name='sgssd_options[<?php echo esc_attr($label_for) ?>]'
+			name='sgmcs_options[<?php echo esc_attr($label_for) ?>]'
 			type='password'
 			value='<?php echo isset($options[$label_for])
 				?esc_attr($options[$label_for])
@@ -235,11 +235,11 @@ class SendGridSingleSendDispatcherOptions {
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
-			<div id="sgssd_errors_head" style="display: none"></div>
-			<form id="sgssd_form" action='options.php' method='post'>
+			<div id="sgmcs_errors_head" style="display: none"></div>
+			<form id="sgmcs_form" action='options.php' method='post'>
 			<?php
-			settings_fields('sgssd');
-			do_settings_sections('sgssd');
+			settings_fields('sgmcs');
+			do_settings_sections('sgmcs');
 			submit_button('Save Changes');
 			?>
 			</form>

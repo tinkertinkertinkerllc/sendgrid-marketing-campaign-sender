@@ -2,12 +2,12 @@
 
 require_once plugin_dir_path(__FILE__).'/vendor/sendgrid-php/sendgrid-php.php';
 
-class SendGridSingleSendDispatcherAjax {
+class SendGridMarketingCampaignSenderAjax {
 	function __construct() {
-		add_action('wp_ajax_sgssd_get_qualifiers', array($this, 'get_qualifiers'));
-		add_action('wp_ajax_sgssd_create', array($this, 'create_single_send'));
-		add_action('wp_ajax_sgssd_schedule', array($this, 'schedule_single_send'));
-		add_action('wp_ajax_sgssd_forget', array($this, 'forget_single_send'));
+		add_action('wp_ajax_sgmcs_get_qualifiers', array($this, 'get_qualifiers'));
+		add_action('wp_ajax_sgmcs_create', array($this, 'create_single_send'));
+		add_action('wp_ajax_sgmcs_schedule', array($this, 'schedule_single_send'));
+		add_action('wp_ajax_sgmcs_forget', array($this, 'forget_single_send'));
 	}
 
 	function send_error($text, $status) {
@@ -88,7 +88,7 @@ class SendGridSingleSendDispatcherAjax {
 	}
 
 	function sendgrid() {
-		$util = $GLOBALS['sendgrid_single_send_dispatcher_util'];
+		$util = $GLOBALS['sendgrid_marketing_campaign_sender_util'];
 
 		if(!$util->api_key_exists()) {
 			$this->send_error("No API key given", 500);
@@ -102,9 +102,9 @@ class SendGridSingleSendDispatcherAjax {
 	}
 
 	function get_qualifiers() {
-		$util = $GLOBALS['sendgrid_single_send_dispatcher_util'];
+		$util = $GLOBALS['sendgrid_marketing_campaign_sender_util'];
 
-		check_ajax_referer('sgssd_get_qualifiers');
+		check_ajax_referer('sgmcs_get_qualifiers');
 		if(!(current_user_can('edit_posts') or current_user_can('edit_pages'))) {
 			$this->send_forbidden();
 		}
@@ -159,22 +159,22 @@ class SendGridSingleSendDispatcherAjax {
 	}
 
 	function schedule_with($sg, $ss_id, $post_id) {
-		if(get_post_meta($post_id, '_sgssd_single_send_scheduled')) {
+		if(get_post_meta($post_id, '_sgmcs_single_send_scheduled')) {
 			$this->send_bad_request();
 		}
 
 		$this->put($sg->client->marketing()->singlesends()->_($ss_id)->schedule(),
 			array("send_at" => "now"));
 
-		update_post_meta($post_id, '_sgssd_single_send_scheduled', true);
+		update_post_meta($post_id, '_sgmcs_single_send_scheduled', true);
 
 		wp_send_json(array());
 	}
 
 	function create_single_send() {
-		$util = $GLOBALS['sendgrid_single_send_dispatcher_util'];
+		$util = $GLOBALS['sendgrid_marketing_campaign_sender_util'];
 
-		check_ajax_referer('sgssd_create');
+		check_ajax_referer('sgmcs_create');
 		if(!current_user_can('publish_posts')) {
 			$this->send_forbidden();
 		}
@@ -215,7 +215,7 @@ class SendGridSingleSendDispatcherAjax {
 			$segments = array();
 		}
 
-		if(metadata_exists('post', $post_id, '_sgssd_single_send_id')) {
+		if(metadata_exists('post', $post_id, '_sgmcs_single_send_id')) {
 			// Don't make a duplicate single send when one already existed.
 			$this->send_bad_request();
 		}
@@ -241,7 +241,7 @@ class SendGridSingleSendDispatcherAjax {
 		));
 
 		$ss_id = (string)$data->id;
-		update_post_meta($post_id, '_sgssd_single_send_id', $ss_id);
+		update_post_meta($post_id, '_sgmcs_single_send_id', $ss_id);
 
 		if($should_schedule) $this->schedule_with($sg, $ss_id, $post_id);
 
@@ -249,7 +249,7 @@ class SendGridSingleSendDispatcherAjax {
 	}
 
 	function schedule_single_send() {
-		check_ajax_referer('sgssd_schedule');
+		check_ajax_referer('sgmcs_schedule');
 		if(!current_user_can('publish_posts')) {
 			$this->send_forbidden();
 		}
@@ -262,7 +262,7 @@ class SendGridSingleSendDispatcherAjax {
 			$this->send_forbidden();
 		}
 
-		$ss_id = get_post_meta($post_id, '_sgssd_single_send_id', true);
+		$ss_id = get_post_meta($post_id, '_sgmcs_single_send_id', true);
 		if(!$ss_id) $this->send_bad_request();
 
 		$sg = $this->sendgrid();
@@ -271,7 +271,7 @@ class SendGridSingleSendDispatcherAjax {
 	}
 
 	function forget_single_send() {
-		check_ajax_referer('sgssd_forget');
+		check_ajax_referer('sgmcs_forget');
 		if(!current_user_can('publish_posts')) {
 			$this->send_forbidden();
 		}
@@ -284,11 +284,11 @@ class SendGridSingleSendDispatcherAjax {
 			$this->send_forbidden();
 		}
 
-		if(!get_post_meta($post_id, '_sgssd_single_send_id'))
+		if(!get_post_meta($post_id, '_sgmcs_single_send_id'))
 			$this->send_bad_request();
 
-		delete_post_meta($post_id, '_sgssd_single_send_scheduled');
-		delete_post_meta($post_id, '_sgssd_single_send_id');
+		delete_post_meta($post_id, '_sgmcs_single_send_scheduled');
+		delete_post_meta($post_id, '_sgmcs_single_send_id');
 
 		wp_send_json(array());
 	}

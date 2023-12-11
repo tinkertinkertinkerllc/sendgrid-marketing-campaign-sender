@@ -2,18 +2,18 @@
 
 require_once plugin_dir_path(__FILE__).'/util.php';
 
-class SendGridSingleSendDispatcherEditor {
+class SendGridMarketingCampaignSenderEditor {
 	function __construct() {
 		add_action('add_meta_boxes', function() {
 			add_meta_box(
-				'sgssd_meta_box',
-				'Single Send',
+				'sgmcs_meta_box',
+				'SendGrid Marketing Campaign',
 				array($this, 'meta_box'),
 				'post');
 		});
 
 		add_action('admin_enqueue_scripts', function() {
-			$util = $GLOBALS['sendgrid_single_send_dispatcher_util'];
+			$util = $GLOBALS['sendgrid_marketing_campaign_sender_util'];
 
 			$screen = get_current_screen();
 			if(!is_object($screen) or $screen->base != 'post'
@@ -23,21 +23,21 @@ class SendGridSingleSendDispatcherEditor {
 
 			$util->enqueue();
 			wp_enqueue_script(
-				'sgssd_editor',
+				'sgmcs_editor',
 				$util->script_url('editor'),
-				array('jquery', 'sgssd_requests', 'react', 'wp-data'),
+				array('jquery', 'sgmcs_requests', 'react', 'wp-data'),
 				"1");
 			wp_localize_script(
-				'sgssd_editor',
-				'sgssd_editor_ajax',
+				'sgmcs_editor',
+				'sgmcs_editor_ajax',
 				array(
 					'ajax_url' => admin_url('admin-ajax.php'),
-					'create_nonce' => wp_create_nonce('sgssd_create'),
-					'schedule_nonce' => wp_create_nonce('sgssd_schedule'),
-					'forget_nonce' => wp_create_nonce('sgssd_forget'),
+					'create_nonce' => wp_create_nonce('sgmcs_create'),
+					'schedule_nonce' => wp_create_nonce('sgmcs_schedule'),
+					'forget_nonce' => wp_create_nonce('sgmcs_forget'),
 				));
 			wp_enqueue_style(
-				'sgssd_editor_style',
+				'sgmcs_editor_style',
 				plugins_url('css/editor.css', __FILE__),
 				array(),
 				"1");
@@ -46,7 +46,7 @@ class SendGridSingleSendDispatcherEditor {
 
 	function forget_warning() {
 		?>
-		<p class="sgssd_forget_warning">
+		<p class="sgmcs_forget_warning">
 		* Note: This button will not delete the single send, it will ony forget
 		about it. Continuing will re-create the single send while leaving the
 		old one intact.
@@ -63,7 +63,7 @@ class SendGridSingleSendDispatcherEditor {
 	}
 
 	function meta_box($post) {
-		$util = $GLOBALS['sendgrid_single_send_dispatcher_util'];
+		$util = $GLOBALS['sendgrid_marketing_campaign_sender_util'];
 
 		if(!$util->api_key_exists()) {
 			echo "<p>You haven't configured an API key!</p>";
@@ -82,8 +82,8 @@ class SendGridSingleSendDispatcherEditor {
 			return;
 		}
 
-		if(get_post_meta($post->ID, '_sgssd_single_send_id')) {
-			if(get_post_meta($post->ID, '_sgssd_single_send_scheduled')) {
+		if(get_post_meta($post->ID, '_sgmcs_single_send_id')) {
+			if(get_post_meta($post->ID, '_sgmcs_single_send_scheduled')) {
 				$state = $this::SendScheduled;
 			} else {
 				$state = $this::SendCreated;
@@ -93,9 +93,9 @@ class SendGridSingleSendDispatcherEditor {
 		}
 
 		?>
-		<div id="sgssd_send_none"
+		<div id="sgmcs_send_none"
 				<?php $this->maybe_hidden($state == $this::SendNone) ?>>
-			<span>Profile:</span><select id="sgssd_profile">
+			<span>Profile:</span><select id="sgmcs_profile">
 			<?php
 
 			foreach($util->get_profiles() as $id => $profile) {
@@ -109,37 +109,37 @@ class SendGridSingleSendDispatcherEditor {
 			</select>
 			<p><button
 				type="button"
-				class="button sgssd_button"
-				id="sgssd_create">Create Without Scheduling</button></p>
+				class="button sgmcs_button"
+				id="sgmcs_create">Create Without Scheduling</button></p>
 			<p><button
 				type="button"
-				class="button sgssd_button"
-				id="sgssd_create_and_schedule">Schedule</button></p>
+				class="button sgmcs_button"
+				id="sgmcs_create_and_schedule">Schedule</button></p>
 		</div>
 
-		<div id="sgssd_send_created"
+		<div id="sgmcs_send_created"
 				<?php $this->maybe_hidden($state == $this::SendCreated) ?>>
-			<p class="sgssd_success_line">* Single Send Created.</p>
+			<p class="sgmcs_success_line">* Single Send Created.</p>
 			<p><button
 				type="button"
-				class="button sgssd_button"
-				id="sgssd_schedule">Schedule</button></p>
+				class="button sgmcs_button"
+				id="sgmcs_schedule">Schedule</button></p>
 			<?php $this->forget_warning() ?>
 			<p><button
 				type="button"
-				class="button sgssd_button"
-				id="sgssd_forget">Forget</button></p>
+				class="button sgmcs_button"
+				id="sgmcs_forget">Forget</button></p>
 		</div>
 
-		<div id="sgssd_send_scheduled"
+		<div id="sgmcs_send_scheduled"
 				<?php $this->maybe_hidden($state == $this::SendScheduled) ?>>
-			<p class="sgssd_success_line">* Single Send Created.</p>
-			<p class="sgssd_success_line">* Single Send Scheduled.</p>
+			<p class="sgmcs_success_line">* Single Send Created.</p>
+			<p class="sgmcs_success_line">* Single Send Scheduled.</p>
 			<?php $this->forget_warning() ?>
-			<p class="sgssd_success_line"><button
+			<p class="sgmcs_success_line"><button
 				type="button"
-				class="button sgssd_button"
-				id="sgssd_forget_scheduled">Forget</button></p>
+				class="button sgmcs_button"
+				id="sgmcs_forget_scheduled">Forget</button></p>
 		</div>
 		<?php
 	}

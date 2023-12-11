@@ -1,6 +1,6 @@
 <?php
 
-class SendGridSingleSendDispatcherUtil {
+class SendGridMarketingCampaignSenderUtil {
 	const ScriptSuffix = ".min.js";
 
 	function script_url($path) {
@@ -8,10 +8,10 @@ class SendGridSingleSendDispatcherUtil {
 	}
 
 	function enqueue() {
-		if(!wp_script_is('sgssd_requests', 'registered')
-				and !wp_script_is('sgssd_requests', 'enqueued')) {
+		if(!wp_script_is('sgmcs_requests', 'registered')
+				and !wp_script_is('sgmcs_requests', 'enqueued')) {
 			wp_register_script(
-				'sgssd_requests',
+				'sgmcs_requests',
 				$this->script_url('requests'),
 				array('jquery'),
 				"1");
@@ -19,7 +19,7 @@ class SendGridSingleSendDispatcherUtil {
 	}
 
 	function api_key() {
-		return get_option('sgssd_options')['sgssd_field_api_key'];
+		return get_option('sgmcs_options')['sgmcs_field_api_key'];
 	}
 
 	function api_key_exists() {
@@ -28,10 +28,10 @@ class SendGridSingleSendDispatcherUtil {
 	}
 
 	function get_profiles() {
-		$options = get_option('sgssd_options');
+		$options = get_option('sgmcs_options');
 		if($options === false) return array();
-		if(isset($options["sgssd_field_profiles"])) {
-			return $options["sgssd_field_profiles"];
+		if(isset($options["sgmcs_field_profiles"])) {
+			return $options["sgmcs_field_profiles"];
 		}
 		return array();
 	}

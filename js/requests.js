@@ -1,4 +1,4 @@
-function sgssd_request(type, url, data, success, error) {
+function sgmcs_request(type, url, data, success, error) {
 	let res = jQuery.ajax({
 		type: type,
 		url: url,
@@ -19,10 +19,10 @@ function sgssd_request(type, url, data, success, error) {
 	});
 }
 
-function sgssd_get(url, data, success, error) {
-	return sgssd_request("GET", url, data, success, error);
+function sgmcs_get(url, data, success, error) {
+	return sgmcs_request("GET", url, data, success, error);
 }
 
-function sgssd_post(url, data, success, error) {
-	return sgssd_request("POST", url, data, success, error);
+function sgmcs_post(url, data, success, error) {
+	return sgmcs_request("POST", url, data, success, error);
 }

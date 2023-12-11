@@ -1,7 +1,7 @@
 jQuery(document).ready(function($) {
 	const forms = (function(){
 		let qualifiers_state = null;
-		const update_event = new Event("sgssd-forms-update");
+		const update_event = new Event("sgmcs-forms-update");
 
 		function int_option(q) {
 			let node = q.get(0);
@@ -14,9 +14,9 @@ jQuery(document).ready(function($) {
 			qualifiers_state = null;
 			document.dispatchEvent(update_event);
 
-			sgssd_get(sgssd_options_ajax.ajax_url, {
-				_ajax_nonce: sgssd_options_ajax.get_qualifiers_nonce,
-				action: "sgssd_get_qualifiers",
+			sgmcs_get(sgmcs_options_ajax.ajax_url, {
+				_ajax_nonce: sgmcs_options_ajax.get_qualifiers_nonce,
+				action: "sgmcs_get_qualifiers",
 			}, function(data) {
 				qualifiers_state = data;
 				document.dispatchEvent(update_event);
@@ -25,7 +25,7 @@ jQuery(document).ready(function($) {
 					.text("Faield to get SendGrid information: " + error);
 				let div = $(document.createElement("div"))
 					.addClass("notice notice-error is-dismissible").append(p);
-				$("#sgssd_errors_head").after(div);
+				$("#sgmcs_errors_head").after(div);
 				$(document).trigger('wp-updates-notice-added');
 			});
 		};
@@ -65,7 +65,7 @@ jQuery(document).ready(function($) {
 					for(a of initial_state.errors || []) {
 						console.log(a);
 						let p = $(document.createElement("p"))
-							.addClass("sgssd_profile_error").text("* " + a);
+							.addClass("sgmcs_profile_error").text("* " + a);
 						errors.append(p);
 					}
 					$(document).trigger('wp-updates-notice-added');
@@ -128,7 +128,7 @@ jQuery(document).ready(function($) {
 					after_loading();
 				}
 
-				$(document).on("sgssd-forms-update", function() {
+				$(document).on("sgmcs-forms-update", function() {
 					if(qualifiers_state == undefined) {
 						when_loading();
 					} else {
@@ -148,45 +148,45 @@ jQuery(document).ready(function($) {
 		};
 	})();
 
-	let template = $("#sgssd_profile_template");
-	let input = $("#sgssd_field_profiles").get(0);
-	let add = $("#sgssd_profile_add");
-	let checkbox_template = $(".sgssd_profile_checkbox_template");
+	let template = $("#sgmcs_profile_template");
+	let input = $("#sgmcs_field_profiles").get(0);
+	let add = $("#sgmcs_profile_add");
+	let checkbox_template = $(".sgmcs_profile_checkbox_template");
 	let profiles = [];
 
 	function make_profile(id, data) {
 		let clone = template.clone();
 		clone.insertBefore(add);
 		let form = forms.attach(data || {},
-			clone.find(".sgssd_profile_errors"), clone.find(".sgssd_loading"),
-			clone.find(".sgssd_loadable"), clone.find(".sgssd_lists"),
-			clone.find(".sgssd_segments"), clone.find(".sgssd_all_contacts"),
-			clone.find(".sgssd_group"), clone.find(".sgssd_sender"),
+			clone.find(".sgmcs_profile_errors"), clone.find(".sgmcs_loading"),
+			clone.find(".sgmcs_loadable"), clone.find(".sgmcs_lists"),
+			clone.find(".sgmcs_segments"), clone.find(".sgmcs_all_contacts"),
+			clone.find(".sgmcs_group"), clone.find(".sgmcs_sender"),
 			checkbox_template);
 
-		clone.find(".sgssd_delete").on("click", function() {
+		clone.find(".sgmcs_delete").on("click", function() {
 			profiles = profiles.filter((a) => a.node != clone.get(0));
 			clone.remove();
 		});
 
-		clone.find(".sgssd_name").prop("value", data.name || "");
+		clone.find(".sgmcs_name").prop("value", data.name || "");
 		profiles.push({id: id, node: clone.get(0), form: form});
 	}
 
-	for(id in sgssd_options_profiles) {
-		make_profile(id, sgssd_options_profiles[id]);
+	for(id in sgmcs_options_profiles) {
+		make_profile(id, sgmcs_options_profiles[id]);
 	}
 
 	add.on("click", function(){
 		make_profile(window.crypto.randomUUID(), {});
 	});
 
-	$("#sgssd_form").on("submit", function(){
+	$("#sgmcs_form").on("submit", function(){
 		if(!forms.loaded()) return;
 		let new_input = {};
 		for(a of profiles) {
 			new_input[a.id] = {
-				name: $(a.node).find(".sgssd_name").prop("value"),
+				name: $(a.node).find(".sgmcs_name").prop("value"),
 				qualifiers: a.form.compile(),
 			};
 		}
