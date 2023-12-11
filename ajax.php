@@ -22,6 +22,9 @@ class SendGridMarketingCampaignSenderAjax {
 		$this->send_error("Forbidden", 403);
 	}
 
+	// Parses $data, which should be a string that should be JSON. If it's JSON
+	// and that JSON doesn't have any error messages (in an "errors" key), then
+	// it'll be returned. Otherwise, dies with an error.
 	function parse_response($data) {
 		$res = json_decode($data);
 		if($res === null)
@@ -60,6 +63,9 @@ class SendGridMarketingCampaignSenderAjax {
 		return $this->request("put", $base, ...$args);
 	}
 
+	// $pos should be the body of a previous request as a parsed JSON object.
+	// It should have a "_metadata" key with a "next" link, if a next page
+	// exists.
 	function paginate(&$pos) {
 		if(!isset($pos->_metadata)) {
 			$this->send_error("Invalid server response", 500);
@@ -101,11 +107,14 @@ class SendGridMarketingCampaignSenderAjax {
 		return (int)$from;
 	}
 
+	// Queries information from SendGrid that's needed to create a single send,
+	// like what lists and contacts there are. The current user should be able
+	// to manage options.
 	function get_qualifiers() {
 		$util = $GLOBALS['sendgrid_marketing_campaign_sender_util'];
 
 		check_ajax_referer('sgmcs_get_qualifiers');
-		if(!(current_user_can('edit_posts') or current_user_can('edit_pages'))) {
+		if(!(current_user_can('manage_options'))) {
 			$this->send_forbidden();
 		}
 
@@ -171,13 +180,18 @@ class SendGridMarketingCampaignSenderAjax {
 		wp_send_json(array());
 	}
 
+	// Create a single send. Required fields are:
+	//   * post_ID: The ID of the post the single send is being created from.
+	//     An error is returned if this post already had a single send created
+	//     for it. The current user must be able to edit this post.
+	//   * should_schedule: "true" of "false" based on whether the single send
+	//     should be scheduled after being created.
+	//   * profile_ID: The ID of a profile (keys in the
+	//     sgmcs_options[sgmcs_field_profiles] option).
 	function create_single_send() {
 		$util = $GLOBALS['sendgrid_marketing_campaign_sender_util'];
 
 		check_ajax_referer('sgmcs_create');
-		if(!current_user_can('publish_posts')) {
-			$this->send_forbidden();
-		}
 
 		// Request parsing and validation:
 
@@ -248,12 +262,12 @@ class SendGridMarketingCampaignSenderAjax {
 		wp_send_json(array());
 	}
 
+	// Schedule an already-created single send to be sent. Required fields are:
+	//   * post_ID: The ID of the post the single send was created for. An
+	//     error is returned if the single send wasn't created yet or was
+	//     already sent. The current user must be able to edit this post.
 	function schedule_single_send() {
 		check_ajax_referer('sgmcs_schedule');
-		if(!current_user_can('publish_posts')) {
-			$this->send_forbidden();
-		}
-
 		if(!isset($_POST["post_ID"])) $this->send_bad_request();
 		$post_id = $this->int_id($_POST["post_ID"]);
 		if($post_id == false) $this->send_bad_request();
@@ -270,11 +284,12 @@ class SendGridMarketingCampaignSenderAjax {
 		$this->schedule_with($sg, $ss_id, $post_id);
 	}
 
+	// Forget the single-send for a post. This does not delete the single send.
+	//   * post_ID: The ID of the post the single send was created for. An
+	//     error is returned if the single send wasn't created yet. The current
+	//     user must be able to edit this post.
 	function forget_single_send() {
 		check_ajax_referer('sgmcs_forget');
-		if(!current_user_can('publish_posts')) {
-			$this->send_forbidden();
-		}
 
 		if(!isset($_POST["post_ID"])) $this->send_bad_request();
 		$post_id = $this->int_id($_POST["post_ID"]);
