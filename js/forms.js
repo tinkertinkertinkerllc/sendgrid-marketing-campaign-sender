@@ -13,13 +13,15 @@ const sgssd_forms = (function(){
 		qualifiers_state = null;
 		document.dispatchEvent(update_event);
 
-		jQuery.get(sgssd_forms_ajax.ajax_url, {
+		sgssd_get(sgssd_forms_ajax.ajax_url, {
 			_ajax_nonce: sgssd_forms_ajax.get_qualifiers_nonce,
 			action: "sgssd_get_qualifiers",
 		}, function(data) {
 			qualifiers_state = data;
 			document.dispatchEvent(update_event);
-		}, "json");
+		}, function(error) {
+			console.log(error);
+		});
 	};
 	do_update();
 

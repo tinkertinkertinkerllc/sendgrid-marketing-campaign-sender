@@ -8,73 +8,139 @@ class SendGridSingleSendDispatcherAjax {
 		add_action('wp_ajax_sgssd_create', array($this, 'create'));
 	}
 
+	function send_error($text, $status) {
+		wp_send_json(array("error" => $text), $status);
+	}
+
+	function send_bad_request() {
+		$this->send_error("Bad request", 400);
+	}
+
+	function send_forbidden() {
+		$this->send_error("Forbidden", 403);
+	}
+
+	function parse_response($data) {
+		$res = json_decode($data);
+		if($res === null)
+			$this->send_error("Invalid server response", 500);
+		// TODO: Generate a more human-readable error.
+		if(isset($res->errors))
+			$this->send_error(json_encode($res->errors), 500);
+		return $res;
+	}
+
+	function request($type, $base, ...$args) {
+		try {
+			return $this->parse_response($base->{$type}(...$args)->body());
+		} catch(Exception $ex) {
+			$this->send_error($ex->getMessage(), 500);
+		}
+	}
+
+	function get($base, ...$args) {
+		return $this->request("get", $base, ...$args);
+	}
+
+	function post($base, ...$args) {
+		return $this->request("post", $base, ...$args);
+	}
+
+	function put($base, ...$args) {
+		return $this->request("put", $base, ...$args);
+	}
+
+	function paginate(&$pos) {
+		// TODO: Let's just parse the URL and give it to the sendgrid
+		// php-http-client for consistency.
+
+		if(!isset($pos->_metadata)) {
+			$this->send_error("Invalid server response", 500);
+		}
+		$meta = $pos->_metadata;
+		if(!isset($meta->next)) {
+			$pos = null;
+			return false;
+		}
+
+		$ch = curl_init($meta->next);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+			'Accept: application/json',
+			'Authorization: Bearer ' . $this->api_key()
+		));
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		$out = curl_exec($ch);
+		if($out === false) {
+			$this->send_error(curl_strerror(curl_errno($ch)), 500);
+		}
+		curl_close($ch);
+
+		$pos = parse_response($out);
+
+		return true;
+	}
+
+	function sendgrid() {
+		$util = $GLOBALS['sendgrid_single_send_dispatcher_util'];
+
+		if(!$util->api_key_exists()) {
+			$this->send_error("No API key given", 500);
+		}
+		return new \SendGrid($util->api_key());
+	}
+
+	function int_id($from) {
+		if(!is_numeric($from)) return null;
+		return (int)$from;
+	}
+
 	function get_qualifiers() {
 		$util = $GLOBALS['sendgrid_single_send_dispatcher_util'];
 
 		check_ajax_referer('sgssd_get_qualifiers');
 		if(!(current_user_can('edit_posts') or current_user_can('edit_pages'))) {
-			wp_die(-1, 403);
+			$this->send_forbidden();
 		}
 
-		$sg = new \SendGrid($util->api_key());
+		$sg = $this->sendgrid();
 
 		$lists = array();
-		try {
-			$pos = $sg->client->marketing()->lists()->get()->body();
-			$pos = $util->parse_body($pos);
-			do {
-				foreach ($pos->{"result"} as $item) {
-					array_push($lists, array(
-						"id" => $item->{"id"},
-						"name" =>$item->{"name"})
-					);
-				}
-			} while($util->paginate($pos));
-		} catch(Exception $ex) {
-			wp_die();
-		}
-
-		$segments = array();
-		try {
-			$data = $sg->client->marketing()->segments()->_("2.0")->get()->body();
-			$data = $util->parse_body($data);
-			foreach($data->{"results"} as $item) {
-				array_push($segments, array(
-					"id" => $item->{"id"},
-					"name" => $item->{"name"},
+		$pos = $this->get($sg->client->marketing()->listsfake());
+		do {
+			foreach ($pos->result as $item) {
+				array_push($lists, array(
+					"id" => $item->id,
+					"name" =>$item->name
 				));
 			}
-		} catch(Exception $ex) {
-			wp_die();
+		} while($this->paginate($pos));
+
+		$segments = array();
+		$data = $this->get($sg->client->marketing()->segments()->_("2.0"));
+		foreach($data->results as $item) {
+			array_push($segments, array(
+				"id" => $item->id,
+				"name" => $item->nam,
+			));
 		}
 
 		$suppressions = array();
-		try {
-			$data = $sg->client->asm()->groups()->get()->body();
-			$data = $util->parse_body($data);
-			foreach($data as $item) {
-				array_push($suppressions, array(
-					"id" => $item->{"id"},
-					"name" => $item->{"name"},
-				));
-			}
-		} catch(Exception $ex) {
-			wp_die();
+		$data = $this->get($sg->client->asm()->groups());
+		foreach($data as $item) {
+			array_push($suppressions, array(
+				"id" => $item->{"id"},
+				"name" => $item->{"name"},
+			));
 		}
 
 		$senders = array();
-		try {
-			$data = $sg->client->senders()->get()->body();
-			$data = $util->parse_body($data);
-			foreach($data as $item) {
-				array_push($senders, array(
-					"id" => $item->{"id"},
-					"nickname" => $item->{"nickname"},
-					"from" => $item->{"from"},
-				));
-			}
-		} catch(Exception $ex) {
-			wp_die();
+		$data = $this->get($sg->client->senders());
+		foreach($data as $item) {
+			array_push($senders, array(
+				"id" => $item->id,
+				"nickname" => $item->nickname,
+				"from" => $item->from,
+			));
 		}
 
 		wp_send_json(array(
@@ -85,58 +151,37 @@ class SendGridSingleSendDispatcherAjax {
 		);
 	}
 
-	function str_idlist($from) {
-		foreach($from as $id) {
-			if(!is_string($id)) return null;
-		}
-		return $from;
-	}
-
-	function int_id($from) {
-		if(!is_numeric($from)) return null;
-		return (int)$from;
-	}
-
-	function int_idlist($from) {
-		$res = array();
-		foreach($from as $id) {
-			if(!is_numeric($id)) return null;
-			array_append($res, (int)$id);
-		}
-		return $res;
-	}
-
 	function create() {
 		$util = $GLOBALS['sendgrid_single_send_dispatcher_util'];
 
 		check_ajax_referer('sgssd_create');
 		if(!current_user_can('publish_posts')) {
-			wp_die(-1, 403);
+			$this->send_forbidden();
 		}
 
 		// Request parsing and validation:
 
-		if(!isset($_POST["post_ID"])) wp_die(-1, 400);
+		if(!isset($_POST["post_ID"])) $this->send_bad_request();
 		$post_id = $this->int_id($_POST["post_ID"]);
-		if($post_id == false) wp_die(-1, 400);
+		if($post_id == false) $this->send_bad_request();
 		$post = get_post($post_id);
-		if($post === null) wp_die(-1, 400);
+		if($post === null) $this->send_bad_request();
 
-		if(!isset($_POST["should_schedule"])) wp_die(-1, 400);
+		if(!isset($_POST["should_schedule"])) $this->send_bad_request();
 		$should_schedule = json_decode($_POST["should_schedule"]);
-		if(!is_bool($should_schedule)) wp_die(-1, 400);
+		if(!is_bool($should_schedule)) $this->send_bad_request();
 
 		if(!current_user_can('edit_post', $post_id)) {
-			wp_die(-1, 403);
+			$this->send_forbidden();
 		}
 
-		if(!isset($_POST["profile_ID"])) wp_die(-1, 400);
+		if(!isset($_POST["profile_ID"])) $this->send_bad_request();
 		$profile_id = $_POST["profile_ID"];
-		if(!is_string($profile_id)) wp_die(-1, 400);
+		if(!is_string($profile_id)) $this->send_bad_request();
 		$profiles = $util->get_profiles();
-		if(!isset($profiles[$profile_id])) wp_die(-1, 400);
+		if(!isset($profiles[$profile_id])) $this->send_bad_request();
 		$profile = $profiles[$profile_id];
-		if(!empty($profile->errors)) wp_die(-1, 400);
+		if(!empty($profile->errors)) $this->send_bad_request();
 
 		$qualifiers = $profile->qualifiers;
 		$all_contacts = $qualifiers->all_contacts;
@@ -146,51 +191,41 @@ class SendGridSingleSendDispatcherAjax {
 		$sender = $qualifiers->sender;
 
 		if($all_contacts) {
-			$lists = [];
-			$segments = [];
+			$lists = array();
+			$segments = array();
 		}
 
 		if(metadata_exists('post', $post_id, '_sgssd_single_send_id')) {
 			// Don't make a duplicate single send when one already existed.
-			wp_die(-1, 400);
+			$this->send_bad_request();
 		}
 
 		$subject = $post->post_title;
 		$content = '<h1>' . $post->post_title . '</h1>' . $post->post_content;
 
-		$sg = new \SendGrid($util->api_key());
-		try {
-			$data = $sg->client->marketing()->singlesends()->post(array(
-				"name" => "TODO",
-				"categories" => [],
-				"send_to" => array(
-					"list_ids" => $lists,
-					"segment_ids" => $segments,
-					"all" => $all_contacts,
-				),
-				"email_config" => array(
-					"subject" => $subject,
-					"html_content" => $content,
-					"suppression_group_id" => $suppression_group,
-					"sender_id" => $sender,
-				),
-			))->body();
-			$data = $util->parse_body($data);
-		} catch(Exception $ex) {
-			wp_die();
-		};
+		$sg = $this->sendgrid();
+		$data = $this->post($sg->client->marketing()->singlesends(), array(
+			"name" => "TODO",
+			"categories" => array(),
+			"send_to" => array(
+				"list_ids" => $lists,
+				"segment_ids" => $segments,
+				"all" => $all_contacts,
+			),
+			"email_config" => array(
+				"subject" => $subject,
+				"html_content" => $content,
+				"suppression_group_id" => $suppression_group,
+				"sender_id" => $sender,
+			),
+		));
 
-		$ss_id = (string)$data->{"id"};
+		$ss_id = (string)$data->id;
 		update_post_meta($post_id, '_sgssd_single_send_id', $ss_id);
 
 		if($should_schedule) {
-			try {
-				$data = $sg->client->marketing()->singlesends()->_($ss_id)->schedule()->put(
-					array("send_at" => "now"))->body();
-				$data = $util->parse_body($data);
-			} catch(Exception $ex) {
-				wp_die();
-			}
+			$this->put($sg->client->marketing()->singlesends()->_($ss_id)->schedule(),
+				array("send_at" => "now"));
 
 			update_post_meta($post_id, '_sgssd_single_send_scheduled', true);
 		}

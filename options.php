@@ -23,13 +23,13 @@ class SendGridSingleSendDispatcherOptions {
 			if(isset($options['sgssd_field_profiles'])) {
 				$profiles = $options['sgssd_field_profiles'];
 			} else {
-				$profiles = [];
+				$profiles = array();
 			}
 
 			wp_enqueue_script(
 				'sgssd_options',
 				plugins_url('js/options.js', __FILE__),
-				["jquery", "sgssd_forms"],
+				array("jquery", "sgssd_forms"),
 				bin2hex(random_bytes(10))); # TODO: Don't randomize the version
 			wp_localize_script(
 				'sgssd_options',
@@ -38,7 +38,7 @@ class SendGridSingleSendDispatcherOptions {
 			wp_enqueue_style(
 				'sgssd_options_style',
 				plugins_url('css/options.css', __FILE__),
-				[],
+				array(),
 				bin2hex(random_bytes(10))); # TODO: Don't randomize the version
 
 		});

@@ -25,7 +25,7 @@ class SendGridSingleSendDispatcherEditor {
 			wp_enqueue_script(
 				'sgssd_editor',
 				plugins_url('js/editor.js', __FILE__),
-				["jquery"],
+				array("jquery", "sgssd_requests"),
 				bin2hex(random_bytes(10))); # TODO: Don't randomize the version
 			wp_localize_script(
 				'sgssd_editor',
