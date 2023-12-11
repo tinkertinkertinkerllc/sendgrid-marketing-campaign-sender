@@ -50,9 +50,9 @@ class SendGridSingleSendDispatcherEditor {
 	function forget_warning() {
 		?>
 		<p class="sgssd_forget_warning">
-		Note: This button will not delete the single send. It will only forget about
-		the one associated with this post. Use it if you need to re-create
-		the singlesend.
+		* Note: This button will not delete the single send, it will ony forget
+		about it. Continuing will re-create the single send while leaving the
+		old one intact.
 		</p>
 		<?php
 	}
@@ -122,7 +122,7 @@ class SendGridSingleSendDispatcherEditor {
 
 		<div id="sgssd_send_created"
 				<?php $this->maybe_hidden($state == $this::SendCreated) ?>>
-			<p>Single Send Created.</p>
+			<p class="sgssd_success_line">* Single Send Created.</p>
 			<p><button
 				type="button"
 				class="button sgssd_button"
@@ -136,10 +136,10 @@ class SendGridSingleSendDispatcherEditor {
 
 		<div id="sgssd_send_scheduled"
 				<?php $this->maybe_hidden($state == $this::SendScheduled) ?>>
-			<p>Single Send Created.</p>
-			<p>Single Send Scheduled.</p>
+			<p class="sgssd_success_line">* Single Send Created.</p>
+			<p class="sgssd_success_line">* Single Send Scheduled.</p>
 			<?php $this->forget_warning() ?>
-			<p><button
+			<p class="sgssd_success_line"><button
 				type="button"
 				class="button sgssd_button"
 				id="sgssd_forget_scheduled">Forget</button></p>
