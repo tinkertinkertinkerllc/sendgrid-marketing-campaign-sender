@@ -1,0 +1,7 @@
+.sgmcs_forget_warning {
+	display: none;
+	color: red;
+}
+.sgmcs_success_line {
+	color: green;
+}
