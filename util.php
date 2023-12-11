@@ -1,14 +1,20 @@
 <?php
 
 class SendGridSingleSendDispatcherUtil {
+	const ScriptSuffix = ".min.js";
+
+	function script_url($path) {
+		return plugins_url("js/" . $path . $this::ScriptSuffix, __FILE__);
+	}
+
 	function enqueue() {
 		if(!wp_script_is('sgssd_requests', 'registered')
 				and !wp_script_is('sgssd_requests', 'enqueued')) {
 			wp_register_script(
 				'sgssd_requests',
-				plugins_url('js/requests.js', __FILE__),
+				$this->script_url('requests'),
 				array('jquery'),
-				bin2hex(random_bytes(10))); # TODO: Don't randomize the version
+				"1");
 		}
 	}
 

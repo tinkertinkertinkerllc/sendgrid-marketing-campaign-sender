@@ -35,8 +35,8 @@ jQuery(document).ready(function($) {
 			attach: function(initial_state, errors, loading, not_loading,
 				lists, segments, all_contacts, suppression_group, sender,
 				checkbox_template) {
-				let state = initial_state.qualifiers;
-				let initial_quals = initial_state.qualifiers;
+				let state = {};
+				let initial_quals = initial_state.qualifiers || {};
 				state.lists = [...(initial_quals.lists || [])]
 				state.segments = [...(initial_quals.segments || [])]
 				state.all_contacts = initial_quals.all_contacts || false;

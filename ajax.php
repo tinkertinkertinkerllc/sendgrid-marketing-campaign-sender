@@ -61,9 +61,6 @@ class SendGridSingleSendDispatcherAjax {
 	}
 
 	function paginate(&$pos) {
-		// TODO: Let's just parse the URL and give it to the sendgrid
-		// php-http-client for consistency.
-
 		if(!isset($pos->_metadata)) {
 			$this->send_error("Invalid server response", 500);
 		}
@@ -228,7 +225,7 @@ class SendGridSingleSendDispatcherAjax {
 
 		$sg = $this->sendgrid();
 		$data = $this->post($sg->client->marketing()->singlesends(), array(
-			"name" => "TODO",
+			"name" => $subject . " (" . date("l, d M Y H:i:s") . ")",
 			"categories" => array(),
 			"send_to" => array(
 				"list_ids" => $lists,

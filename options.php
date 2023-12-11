@@ -22,9 +22,9 @@ class SendGridSingleSendDispatcherOptions {
 			if($util->api_key_exists()) {
 				wp_enqueue_script(
 					'sgssd_options',
-					plugins_url('js/options.js', __FILE__),
+					$util->script_url('options'),
 					array("jquery", "sgssd_requests"),
-					bin2hex(random_bytes(10))); # TODO: Don't randomize the version
+					"1");
 				wp_localize_script(
 					'sgssd_options',
 					'sgssd_options_ajax',
@@ -40,7 +40,7 @@ class SendGridSingleSendDispatcherOptions {
 					'sgssd_options_style',
 					plugins_url('css/options.css', __FILE__),
 					array(),
-					bin2hex(random_bytes(10))); # TODO: Don't randomize the version
+					"1");
 			}
 		});
 		add_action('admin_init', function() {

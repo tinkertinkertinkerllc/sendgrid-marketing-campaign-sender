@@ -5,14 +5,11 @@ require_once plugin_dir_path(__FILE__).'/util.php';
 class SendGridSingleSendDispatcherEditor {
 	function __construct() {
 		add_action('add_meta_boxes', function() {
-			// TODO: Handle $post_type here the same way we do when enqueueing
-			// scripts.
-
 			add_meta_box(
 				'sgssd_meta_box',
 				'Single Send',
 				array($this, 'meta_box'),
-				'post'); # TODO: Include more post types.
+				'post');
 		});
 
 		add_action('admin_enqueue_scripts', function() {
@@ -27,9 +24,9 @@ class SendGridSingleSendDispatcherEditor {
 			$util->enqueue();
 			wp_enqueue_script(
 				'sgssd_editor',
-				plugins_url('js/editor.js', __FILE__),
+				$util->script_url('editor'),
 				array('jquery', 'sgssd_requests', 'react', 'wp-data'),
-				bin2hex(random_bytes(10))); # TODO: Don't randomize the version
+				"1");
 			wp_localize_script(
 				'sgssd_editor',
 				'sgssd_editor_ajax',
@@ -43,7 +40,7 @@ class SendGridSingleSendDispatcherEditor {
 				'sgssd_editor_style',
 				plugins_url('css/editor.css', __FILE__),
 				array(),
-				bin2hex(random_bytes(10))); # TODO: Don't randomize the version
+				"1");
 		});
 	}
 
