@@ -1,3 +1,8 @@
+/*
+ * Coyright (c) Tinker Tinker Tinker, LLC
+ * Licensed under the GNU GPL version 3.0 or later.  See the file LICENSE for details.
+ */
+
 function sgmcs_request(type, url, data, success, error) {
 	let res = jQuery.ajax({
 		type: type,

@@ -6,7 +6,12 @@
  * Requires PHP: 7.4
  * Author: Luka Waymouth
  * Requires at least: 6.0
+ * License: GPL-3.0-or-later
  *
+ */
+
+/*
+ * Copyright (c) Tinker Tinker Tinker, LLC
  */
 
 require_once plugin_dir_path(__FILE__).'/ajax.php';

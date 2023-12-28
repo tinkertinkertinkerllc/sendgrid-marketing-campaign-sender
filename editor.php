@@ -1,5 +1,10 @@
 <?php
 
+/*
+ * Coyright (c) Tinker Tinker Tinker, LLC
+ * Licensed under the GNU GPL version 3.0 or later.  See the file LICENSE for details.
+ */
+
 require_once plugin_dir_path(__FILE__).'/util.php';
 
 class SendGridMarketingCampaignSenderEditor {
