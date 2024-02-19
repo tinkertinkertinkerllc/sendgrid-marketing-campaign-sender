@@ -240,7 +240,7 @@ class SendGridMarketingCampaignSenderAjax {
 		}
 
 		$subject = $post->post_title;
-		$content = '<h1>' . $post->post_title . '</h1>' . $post->post_content;
+		$content = $post->post_content;
 
 		$sg = $this->sendgrid();
 		$data = $this->post($sg->client->marketing()->singlesends(), array(
